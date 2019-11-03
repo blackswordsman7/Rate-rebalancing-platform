@@ -1,0 +1,111 @@
+{
+  "contractName": "RateSwitcher",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.8+commit.23d335f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/Jared/AaveGitBounty/contracts/RateSwitcher.sol\":\"RateSwitcher\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/Jared/AaveGitBounty/contracts/RateSwitcher.sol\":{\"keccak256\":\"0xc01a70efb370c6005f2b87bd7be638aaf2fb9d6a459ce909376924e0386551bd\",\"urls\":[\"bzzr://497750a0d82deefceb54402506f0686d0ff341793a6c762776c5e079dea5aedb\"]}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603580601d6000396000f3fe6080604052600080fdfea165627a7a72305820dc549b61c4d71656046e8f1b786f867e2af1c4b556e956c8f353bb4513525d320029",
+  "deployedBytecode": "0x6080604052600080fdfea165627a7a72305820dc549b61c4d71656046e8f1b786f867e2af1c4b556e956c8f353bb4513525d320029",
+  "sourceMap": "27:27:1:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;27:27:1;;;;;;;",
+  "deployedSourceMap": "27:27:1:-;;;;;",
+  "source": "pragma solidity ^0.5.0;\r\n\r\ncontract RateSwitcher{\r\n\r\n}\r\n",
+  "sourcePath": "C:/Users/Jared/AaveGitBounty/contracts/RateSwitcher.sol",
+  "ast": {
+    "absolutePath": "/C/Users/Jared/AaveGitBounty/contracts/RateSwitcher.sol",
+    "exportedSymbols": {
+      "RateSwitcher": [
+        59
+      ]
+    },
+    "id": 60,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 58,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:1"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 59,
+        "linearizedBaseContracts": [
+          59
+        ],
+        "name": "RateSwitcher",
+        "nodeType": "ContractDefinition",
+        "nodes": [],
+        "scope": 60,
+        "src": "27:27:1"
+      }
+    ],
+    "src": "0:56:1"
+  },
+  "legacyAST": {
+    "absolutePath": "/C/Users/Jared/AaveGitBounty/contracts/RateSwitcher.sol",
+    "exportedSymbols": {
+      "RateSwitcher": [
+        59
+      ]
+    },
+    "id": 60,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 58,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:1"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 59,
+        "linearizedBaseContracts": [
+          59
+        ],
+        "name": "RateSwitcher",
+        "nodeType": "ContractDefinition",
+        "nodes": [],
+        "scope": 60,
+        "src": "27:27:1"
+      }
+    ],
+    "src": "0:56:1"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.8+commit.23d335f2.Emscripten.clang"
+  },
+  "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0xdd821f3Df350C01e604f24cC9B8e4970b569A6Fe",
+      "transactionHash": "0x416f689b57513adf0db3441c5be06f4636de0915eb0a4985bd260755bc8a002b"
+    }
+  },
+  "schemaVersion": "3.0.17",
+  "updatedAt": "2019-11-02T18:59:09.477Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
