@@ -1,11 +1,11 @@
 pragma solidity ^0.5.0;
 
-import "../interfaces/IReserveInterestRateStrategy.sol";
-import "../libraries/WadRayMath.sol";
-import "../configuration/LendingPoolAddressesProvider.sol";
-import "./LendingPoolCore.sol";
-import "../interfaces/ILendingRateOracle.sol";
-import "../libraries/CoreLibrary.sol";
+import "../AaveProtocol/aave-protocol/contracts/configuration/LendingPoolAddressesProvider.sol";
+import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPool.sol";
+import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPoolCore.sol";
+import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPoolDataProvider.sol";
+import "../AaveProtocol/aave-protocol/contracts/libraries/CoreLibrary.sol";
+import "../AaveProtocol/aave-protocol/contracts/libraries/WadRayMath.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -13,32 +13,60 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // variables. Which are determined by the base interests rates, untilization,
 // and rate scaling ratios.
 //
-contract RateSwitcher is LendingPoolCore, LendingPoolAddressesProvider{
+contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvider{
+
+    //@dev Events
+    event swapLog(address indexed _user, address indexed _reserve, uint256 _rate, uint256 indexed mode);
 
     //user address
     address userAddress;
-    //the lending pool address
-    address lendingPool;
 
-    // LendingPoolAddressesProvider object
+    // Contract initialization
     LendingPoolAddressesProvider public lpAddressesProvider;
+    LendingPoolCore lendingPoolCore;
+    LendingPool lendingPool;
 
     //contructor for this Smart Contract
-    // @dev retrieves the address of the LendingPoolAddressesProvider
-    constructor(address _LPProviderAddress) public {
-         lpAddressesProvider = _LPProviderAddress;
+    // @dev retrieves the contract of the LendingPoolAddressesProvider
+    constructor(LendingPoolAddressesProvider _LPProviderAddress, address _addressProvider) public {
+         lpAddressesProvider = _LPProviderAddress(_addressProvider);
+         lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
+         lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
     }
 
-    //retrieves the lendingPoolCore address
-    address _lendingPoolCore = lpAddressesProvider.getLendingPoolCore();
-    //obtain the CoreLibrary address
-
-    // LendingPoolCore object
-    LendingPoolCore lendingPoolCore = LendingPoolCore(_lendingPoolCore);
-
     //mappings we need to access from LendingPoolCore.sol
-    //mapping(address => CoreLibrary.ReserveData) reserves;
+    mapping(address => CoreLibrary.ReserveData) reserves;
     //mapping(address => mapping(address => CoreLibrary.UserReserveData)) usersReserveData;
-    //address[] public reservesList;
+    mapping(address => mapping(address => CoreLibrary.ReserveData)) usersReserves;
+
+    //gets the list of reserves
+    address[] public reservesListLocal = lendingPoolCore.getReserves();
+
+    function rateSwap(address _userAddress, address[] memory reservesListLocal, uint numOfReserves) public{
+        //@dev for loop that iterates through every resvere and updates the users borrowRateMode
+        // WARN the for loop is currently unbounded
+        for(uint i = 0; i < reservesListLocal.length; i++){
+            uint256 currentVariableBorrowRate = lendingPool.getReserveCurrentVaraibleBorrowRate(reservesListLocal[i]);
+            //uint256 currentFixedBorrowRate = lendingPool.getReserveCurrentFixedBorrowRate(reservesListLocal[i]);
+            //uint256 userCurrentFixedBorrowRate = lendingPoolCore.getUserCurrentFixedBorrowRate(reservesListLocal[i], userAddress);
+            (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
+            uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(reservesListLocal[i], _userAddress);
+
+            //Conditional to verify that they have are active on this reserve
+            if(_principalBorrowBalance > 0){
+                //Fixed rate to Variable Rate swap
+                if((_borrowRateMode == 0) && (userCurrentFixedBorrowRate > currentVariableBorrowRate)){
+                    lendingPool.swapBorrowRateMode(reservesListLocal[]);
+                }
+                //Variable Rate to Fixed Rate swap
+                if((_borrowRateMode == 1) && (currentVariableBorrowRate > userCurrentFixedBorrowRate)){
+                    lendingPool.swapBorrowRateMode(reservesListLocal[]);
+                }
+            }
+        }
+    }
+
+    //Can add more functionality later
+
 
 }
