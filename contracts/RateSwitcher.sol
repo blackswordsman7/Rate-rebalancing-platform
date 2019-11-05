@@ -16,7 +16,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvider{
 
     //@dev Events
-    event swapLog(address indexed _user, address indexed _reserve, uint256 _rate, uint256 indexed mode);
+    event SwapLog(address indexed _user, address indexed _reserve, uint256 _rate);
 
     //user address
     address userAddress;
@@ -28,8 +28,8 @@ contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvi
 
     //contructor for this Smart Contract
     // @dev retrieves the contract of the LendingPoolAddressesProvider
-    constructor(LendingPoolAddressesProvider _LPProviderAddress, address _addressProvider) public {
-         lpAddressesProvider = _LPProviderAddress(_addressProvider);
+    constructor(LendingPoolAddressesProvider _LPProviderAddress) public {
+         lpAddressesProvider = _LPProviderAddress;
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
     }
@@ -39,28 +39,29 @@ contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvi
     //mapping(address => mapping(address => CoreLibrary.UserReserveData)) usersReserveData;
     mapping(address => mapping(address => CoreLibrary.ReserveData)) usersReserves;
 
-    //gets the list of reserves
-    address[] public reservesListLocal = lendingPoolCore.getReserves();
-
-    function rateSwap(address _userAddress, address[] memory reservesListLocal, uint numOfReserves) public{
+    function rateSwap(address _userAddress) public{
+        //gets the list of reserves
+        address[] memory reservesListLocal = lendingPool.getReserves();
         //@dev for loop that iterates through every resvere and updates the users borrowRateMode
         // WARN the for loop is currently unbounded
         for(uint i = 0; i < reservesListLocal.length; i++){
-            uint256 currentVariableBorrowRate = lendingPool.getReserveCurrentVaraibleBorrowRate(reservesListLocal[i]);
+            uint256 currentVariableBorrowRate = lendingPoolCore.getReserveCurrentVariableBorrowRate(reservesListLocal[i]);
             //uint256 currentFixedBorrowRate = lendingPool.getReserveCurrentFixedBorrowRate(reservesListLocal[i]);
-            //uint256 userCurrentFixedBorrowRate = lendingPoolCore.getUserCurrentFixedBorrowRate(reservesListLocal[i], userAddress);
+            uint256 userCurrentFixedBorrowRate = lendingPoolCore.getUserCurrentFixedBorrowRate(reservesListLocal[i], userAddress);
             (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
             uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(reservesListLocal[i], _userAddress);
 
             //Conditional to verify that they have are active on this reserve
             if(_principalBorrowBalance > 0){
                 //Fixed rate to Variable Rate swap
-                if((_borrowRateMode == 0) && (userCurrentFixedBorrowRate > currentVariableBorrowRate)){
-                    lendingPool.swapBorrowRateMode(reservesListLocal[]);
+                if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
+                    lendingPool.swapBorrowRateMode(reservesListLocal[i]);
+                    emit SwapLog(_userAddress, reservesListLocal[i], currentVariableBorrowRate);
                 }
                 //Variable Rate to Fixed Rate swap
-                if((_borrowRateMode == 1) && (currentVariableBorrowRate > userCurrentFixedBorrowRate)){
-                    lendingPool.swapBorrowRateMode(reservesListLocal[]);
+                if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
+                    lendingPool.swapBorrowRateMode(reservesListLocal[i]);
+                    emit SwapLog(_userAddress, reservesListLocal[i], userCurrentFixedBorrowRate);
                 }
             }
         }
