@@ -1,19 +1,23 @@
 pragma solidity ^0.5.0;
 
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 import "../AaveProtocol/aave-protocol/contracts/configuration/LendingPoolAddressesProvider.sol";
 import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPool.sol";
 import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPoolCore.sol";
 import "../AaveProtocol/aave-protocol/contracts/lendingpool/LendingPoolDataProvider.sol";
 import "../AaveProtocol/aave-protocol/contracts/libraries/CoreLibrary.sol";
-import "../AaveProtocol/aave-protocol/contracts/libraries/WadRayMath.sol";
+import "../AaveProtocol/aave-protocol/contracts/configuration/AddressStorage.sol";
+import "../AaveProtocol/aave-protocol/contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 // RateSwitcher contract will automate the interest rate mode depending on market
 // variables. Which are determined by the base interests rates, untilization,
 // and rate scaling ratios.
-//
-contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvider{
+//()
+contract RateSwitcher is Ownable{
 
     //@dev Events
     event SwapLog(address indexed _user, address indexed _reserve, uint256 _rate);
@@ -28,8 +32,8 @@ contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvi
 
     //contructor for this Smart Contract
     // @dev retrieves the contract of the LendingPoolAddressesProvider
-    constructor(LendingPoolAddressesProvider _LPProviderAddress) public {
-         lpAddressesProvider = _LPProviderAddress;
+    constructor(address _LPProviderAddress) public {
+         lpAddressesProvider = LendingPoolAddressesProvider(_LPProviderAddress);
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
     }
@@ -66,8 +70,4 @@ contract RateSwitcher is LendingPoolCore, LendingPool, LendingPoolAddressesProvi
             }
         }
     }
-
-    //Can add more functionality later
-
-
 }
