@@ -32,8 +32,8 @@ contract RateSwitcher is Ownable{
 
     //contructor for this Smart Contract
     // @dev retrieves the contract of the LendingPoolAddressesProvider
-    constructor(address _LPProviderAddress) public {
-         lpAddressesProvider = LendingPoolAddressesProvider(_LPProviderAddress);
+    constructor() public {
+         lpAddressesProvider = LendingPoolAddressesProvider(0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408);
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
     }

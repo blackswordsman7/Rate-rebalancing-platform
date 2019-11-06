@@ -9,11 +9,11 @@ const lendingPoolAddressesProviderABI = [{"constant":true,"inputs":[{"name":"_ke
 
 const lendingPoolAddressesProviderAddress = '0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408';
 
-const lendingPoolAddressessProv = new web3.eth.Contract(lendingPoolAddressesProviderABI, lendingPoolAddressesProviderAddress);
+const lendingPoolAddressessProv = web3.eth.Contract(lendingPoolAddressesProviderABI, lendingPoolAddressesProviderAddress);
 
 
 contract("RateSwitcher", async()=>{
-    it("should intialize an instance of LendingPool, LendingPoolCore, and LendingPoolAddressesProvider", async ()=>{
-        let instance = await RateSwitcher(lendingPoolAddressesProviderAddress).deployed();
+    it("should swap from Variable Rate to Stable rate", async ()=>{
+        let instance = await RateSwitcher.deployed();
     })
 })
