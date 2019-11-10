@@ -169,6 +169,10 @@ contract RateAdvisorPlatform is Ownable{
         //if
     }*/
 
+    // should find the best rate strategy for all Reserves, even if the user doesnt
+    // have an investments in it. This should be based off the stable APR and variable APR
+    // as well as the offered Monthly payment, prinicpal balance, and expected loan duration
+    // Basically find the method that gives them the most profit for their profile type.
     function setBestRateStrategy(address _reserve, address _user){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         //get User Reserve Data
