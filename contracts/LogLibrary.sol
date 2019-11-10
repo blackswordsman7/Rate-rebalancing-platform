@@ -1,3 +1,5 @@
+pragma solidity^0.5.0;
+
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../AaveProtocol/aave-protocol/contracts/libraries/WadRayMath.sol";
 
