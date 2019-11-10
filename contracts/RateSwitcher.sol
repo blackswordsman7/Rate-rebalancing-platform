@@ -36,14 +36,19 @@ contract RateSwitcher is Ownable{
          lpAddressesProvider = LendingPoolAddressesProvider(0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408);
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
+         userAddress = msg.sender();
     }
 
-    //mappings we need to access from LendingPoolCore.sol
-    mapping(address => CoreLibrary.ReserveData) reserves;
-    //mapping(address => mapping(address => CoreLibrary.UserReserveData)) usersReserveData;
-    mapping(address => mapping(address => CoreLibrary.ReserveData)) usersReserves;
+    modifier onlyLocalOwner {
+        require(
+            msg.sender == userAddress,
+            "Only local owner can call this function."
+        );
+        _;
+    }
 
-    function rateSwap(address _userAddress) public{
+    function rateSwapAll(address _userAddress) public{
+        _userAddress = msg.sender();
         //gets the list of reserves
         address[] memory reservesListLocal = lendingPool.getReserves();
         //@dev for loop that iterates through every resvere and updates the users borrowRateMode
@@ -69,5 +74,28 @@ contract RateSwitcher is Ownable{
                 }
             }
         }
+    } //end of rateSwap function
+
+
+    function rateSwapIndividual(address _reserve, address _userAddress) public onlyLocalOwner{
+        uint256 currentVariableBorrowRate = lendingPoolCore.getReserveCurrentVariableBorrowRate(_reserve);
+        uint256 userCurrentFixedBorrowRate = lendingPoolCore.getUserCurrentFixedBorrowRate(_reserve, userAddress);
+        (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
+        uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(_reserve, _userAddress);
+
+        //Conditional to verify that they have are active on this reserve
+        if(_principalBorrowBalance > 0){
+            //Fixed rate to Variable Rate swap
+            if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
+                lendingPool.swapBorrowRateMode(_reserve);
+                emit SwapLog(_userAddress, _reserve, currentVariableBorrowRate);
+            }
+            //Variable Rate to Fixed Rate swap
+            if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
+                lendingPool.swapBorrowRateMode(_reserve);
+                emit SwapLog(_userAddress, _reserve, userCurrentFixedBorrowRate);
+            }
+        }
     }
+
 }

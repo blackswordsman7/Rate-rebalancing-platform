@@ -11,5 +11,5 @@ module.exports = function(deployer){
     deployer.deploy(CoreLibrary);
     deployer.link(CoreLibrary, RateSwitcher);
     deployer.deploy(RateSwitcher, {gas: 4612388, from: '0xa3e1c2602f628112E591A10094bbD59BDC3cb512'});
-
+    deployer.deploy(RateAdvisorPlatform, {gas: 4612388, from: '0xa3e1c2602f628112E591A10094bbD59BDC3cb512'});
 };
