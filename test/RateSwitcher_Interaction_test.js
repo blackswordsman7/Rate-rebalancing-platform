@@ -1,19 +1,49 @@
 //
 const RateSwitcher = artifacts.require("RateSwitcher");
+const LendingPool = artifacts.require("LendingPool");
+const LendingPoolCore = artifacts.require("LendingPoolCore");
+const LendingPoolAddressesProvider = artifacts.require("LendingPoolAddressesProvider");
 
 ///initialize web3 object
 const Web3 = require('web3');
 const web3 = new Web3(`https://kovan.infura.io/v3/344452915ed54c76a762b0eee4b66060`);
 
-const lendingPoolAddressesProviderABI = [{"constant":true,"inputs":[{"name":"_key","type":"bytes32"}],"name":"getAddress","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolCoreUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolParametersProviderUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolManagerUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolConfiguratorUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolLiquidationManagerUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolDataProviderUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingPoolNetworkMetadataProviderUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"PriceOracleUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"LendingRateOracleUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"FeeProviderUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"newAddress","type":"address"}],"name":"InterestRrateStrategyUpdated","type":"event"},{"constant":true,"inputs":[],"name":"getLendingPool","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_pool","type":"address"}],"name":"setLendingPool","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getInterestRateStrategy","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_strategy","type":"address"}],"name":"setInterestRateStrategy","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolCore","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_lendingPoolCore","type":"address"}],"name":"setLendingPoolCore","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolConfigurator","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_configurator","type":"address"}],"name":"setLendingPoolConfigurator","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolManager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_lendingPoolManager","type":"address"}],"name":"setLendingPoolManager","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolDataProvider","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_provider","type":"address"}],"name":"setLendingPoolDataProvider","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getNetworkMetadataProvider","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_networkMetadataProvider","type":"address"}],"name":"setNetworkMetadataProvider","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolParametersProvider","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_parametersProvider","type":"address"}],"name":"setLendingPoolParametersProvider","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getPriceOracle","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_priceOracle","type":"address"}],"name":"setPriceOracle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingRateOracle","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_lendingRateOracle","type":"address"}],"name":"setLendingRateOracle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getFeeProvider","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_feeProvider","type":"address"}],"name":"setFeeProvider","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getLendingPoolLiquidationManager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_manager","type":"address"}],"name":"setLendingPoolLiquidationManager","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}];
-
 const lendingPoolAddressesProviderAddress = '0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408';
 
-const lendingPoolAddressessProv = web3.eth.Contract(lendingPoolAddressesProviderABI, lendingPoolAddressesProviderAddress);
+const lendingPoolAddressessProv = new web3.eth.Contract(LendingPoolAddressesProvider.abi, lendingPoolAddressesProviderAddress);
 
+const lendingPoolAddress = lendingPoolAddressessProv.methods.getLendingPool();
+const lendingPoolProv = new web3.eth.Contract(LendingPool.abi, lendingPoolAddress);
+
+const lendingPoolCoreAddress = lendingPoolAddressessProv.methods.getLendingPoolCore();
+const lendingPoolCoreProv = new web3.eth.Contract(LendingPoolCore.abi, lendingPoolCoreAddress);
+
+const myAddress = '0xa3e1c2602f628112E591A10094bbD59BDC3cb512';
+
+
+web3.eth.accounts.create();
 
 contract("RateSwitcher", async()=>{
-    it("should swap from Variable Rate to Stable rate", async ()=>{
+    it("should return the interest Rate", async ()=>{
         let instance = await RateSwitcher.deployed();
+        let accounts = await web3.eth.getAccounts();
+        let reserveAdd = '0xff795577d9ac8bd7d90ee22b6c1703490b6512fd';
+        var {mode,rate} = await instance.typeOfInterestRate(reserveAdd, myAddress);
+        if(mode==0){
+            var realRate = await lendingPoolProvCore.getUserCurrentFixedBorrowRate(reserveAdd, myAddress);
+            assert.equal(rate, realRate);
+        }
+        else{
+            var realRate = await lendingPoolProvCore.getUserCurrentVariableBorrowRate(reserveAdd, myAddress);
+            assert.equal(rate, realRate);
+        }
+    })
+    it("should swap the interest Rates for all Reserves", async ()=>{
+        let meta = await RateSwitcher.deployed();
+        let accounts = await web3.eth.getAccounts();
+        let results = await meta.rateSwapAll(myAddress, {from: myAddress});
+        //let reserveAdd = '0xff795577d9ac8bd7d90ee22b6c1703490b6512fd';
+        //let (mode,rate) = await instance.typeOfInterestRate(reserveAdd, accounts[0]);
+        results.log[0];
     })
 })
