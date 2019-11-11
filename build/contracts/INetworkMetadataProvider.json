@@ -589,7 +589,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.17",
-  "updatedAt": "2019-11-05T03:53:31.019Z",
+  "updatedAt": "2019-11-11T01:54:50.353Z",
   "devdoc": {
     "methods": {
       "getBlocksPerYear()": {

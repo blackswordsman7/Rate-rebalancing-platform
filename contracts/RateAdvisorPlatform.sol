@@ -14,7 +14,7 @@ import "../AaveProtocol/aave-protocol/contracts/configuration/AddressStorage.sol
 import "../AaveProtocol/aave-protocol/contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 import "./RateSwitcher.sol";
-import "./LogLibary.sol";
+import { LogLibrary } from "./LogLibrary.sol";
 
 contract RateAdvisorPlatform is Ownable{
     using SafeMath for uint256;
@@ -31,7 +31,6 @@ contract RateAdvisorPlatform is Ownable{
     LendingPoolCore lendingPoolCore;
     LendingPool lendingPool;
     LogLibrary logLib;
-    RateSwitcher rateSwitcher;
 
     //contructor for this Smart Contract
     // @dev retrieves the contract of the LendingPoolAddressesProvider
@@ -39,17 +38,15 @@ contract RateAdvisorPlatform is Ownable{
          lpAddressesProvider = LendingPoolAddressesProvider(0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408);
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
-         logLib = new Log();
-         rateSwitcher = RateSwitcher();
-         userAddress = msg.sender();
+         userAddress = msg.sender;
     }
 
-    struct AdvisorUserReserveData{
+    struct AdvisorUserReserveData {
         uint256 monthlyPaymentAmount;
-        uint256 expectedLoanDuration;
+        int256 expectedLoanDuration;
         uint256 earningsCashFlow;
         uint256 spendingCashFlow;
-        int512 netCashFlow;
+        int256 netCashFlow;
     }
 
     modifier onlyLocalOwner {
@@ -60,29 +57,25 @@ contract RateAdvisorPlatform is Ownable{
         _;
     }
 
-    // Get User Data
-    uint256 totalLiquidityETH;
-    uint256 totalCollateralETH;
-    uint256 totalBorrowsETH;
-    uint256 availableBorrowsETH;
-    uint256 currentLiquidationThreshold;
-    uint256 ltv;
-    uint256 healthFactor;
-
     //get the values for the User
-    (totalLiquidityETH, totalCollateralETH, totalBorrowsETH, availableBorrowsETH, currentLiquidationThreshold, ltv,
-        healthFactor) = lendingPool.getUserAccountData(userAddress);
+    /*
+    (uint256 totalLiquidityETH, uint256 totalCollateralETH, uint256 totalBorrowsETH, uint256 availableBorrowsETH, uint256 currentLiquidationThreshold, uint256 ltv,
+    uint256 healthFactor) = lendingPool.getUserAccountData(userAddress);
+    uint256 availableBorrowsETH = lendingPool.getUserAccountData(userAddress);*/
 
+    /*
+    (uint256 _totalLiquidityETH, uint256 _totalCollateralETH, uint256 _totalBorrowsETH, uint256 _availableBorrowsETH, uint256 _currentLiquidationThreshold, uint256 _ltv, uint256 _healthFactor) = lendingPool.getUserAccountData(userAddress);
+*/
     mapping(address => mapping(address => AdvisorUserReserveData)) advisorUserReserveData;
 
     //sets the monthly payment amount (still needs to be fixed)
-    function setMonthlyPaymentAmount(address _reserve, address _user, uint256 amount) external onlyLocalOwner {
+    function setMonthlyPaymentAmount(address _reserve, address _user, uint256 _amount) external onlyLocalOwner {
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
-        user.monthlyPaymentAmount = amount;
+        user.monthlyPaymentAmount = _amount;
     }
 
     //gets the monthly payment amount
-    function getMonthlyPaymentAmount()public view returns (uint256) onlyLocalOwner{
+    function getMonthlyPaymentAmount(address _reserve, address _user)public view returns(uint256){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         return user.monthlyPaymentAmount;
     }
@@ -93,56 +86,60 @@ contract RateAdvisorPlatform is Ownable{
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
 
         //get User Reserve Data
-        (,,, uint256 principalBorrowBalance,, uint256 borrowRate,,,,,) = lendingPool.getUserReserveData(reserve, userAddress);
+        (,,, uint256 principalBorrowBalance,, uint256 borrowRate,,,,,) = lendingPool.getUserReserveData(_reserve, userAddress);
 
         // utilize 1 and 2) log(M - log(M-PR/12)) and 3) log(1+R/12) then the exepcted loan duration = (2)/(3)
-        uint256 paymentAmount = getMonthlyPaymentAmount();
-        uint256 interestPayment = (principalBorrowBalance * borrowRate) / 12;
-        uint256 part1 = LogLibary.log(paymentAmount - interestPayment);
-        uint256 part2 = LogLibrary.log(paymentAmount - part1);
-        uint256 part3 = LogLibrary.log(1+(borrowRate/12));
+        uint256 paymentAmount = getMonthlyPaymentAmount(_reserve, _user);
+        uint256 interestPayment = (principalBorrowBalance.mul(borrowRate)).div(12);
+        uint256 input = paymentAmount.sub(interestPayment);
+        uint256 input2 = uint256(1).add((borrowRate.div(12)));
+        int256 part1 = LogLibrary.log_2(input);
+        int256 part2 = LogLibrary.log_2(paymentAmount - uint256(part1));
+        int256 part3 = LogLibrary.log_2(input2);
         user.expectedLoanDuration = part2 / part3;
     }
 
-    function getExpectedLoanDuration() public view returns (uint256) onlyLocalOwner{
+    function getExpectedLoanDuration(address _reserve, address _user) public view returns (int256){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         return user.expectedLoanDuration;
     }
 
     //liquidity rate * currentUnderlyingBalance
-    function setEarningsCashFlow(address _reserve, address _user, ) public {
+    function setEarningsCashFlow(address _reserve, address _user) public {
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
-        (uint256 currentATokenBalance, uint256 currentUnderlyingBalance, , ,
+        (, uint256 currentUnderlyingBalance, , ,
         , , uint256 liquidityRate, , , , ) = lendingPool.getUserReserveData(_reserve, _user);
-        user.earningsCashFlow = ((currentUnderlyingBalance * liquidityRate) / 12);
+        user.earningsCashFlow = ((currentUnderlyingBalance.mul(liquidityRate)).div(12));
     }
 
-    function getEarningsCashFlow() public view returns (uint256) onlyLocalOwner{
+    function getEarningsCashFlow(address _reserve, address _user) public view returns (uint256){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
-        return earningsCashFlow;
+        return user.earningsCashFlow;
     }
 
-    function setSpendingCashFlow() public view returns(uint256){
+    function setSpendingCashFlow(address _reserve, address _user) public {
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
-        (, , uint256 currentBorrowBalance, uint256 principalBorrowBalance,
-        , uint256 borrowRate, , , , , ) = lendingPool.getUserReserveData(reserve, userAddress);
-        user.spendingCashFlow = ((principalBorrowBalance * borrowRate) / 12);
+        (, , , uint256 principalBorrowBalance,
+        , uint256 borrowRate, , , , , ) = lendingPool.getUserReserveData(_reserve, userAddress);
+        user.spendingCashFlow = ((principalBorrowBalance.mul(borrowRate)).div(12));
     }
 
-    function setNetCashFlow()public {
+    function getSpendingCashFlow(address _reserve, address _user) public view returns (uint256){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
-        user.netCashFlow = earningsCashFlow - spendingCashFlow;
+        return user.spendingCashFlow;
+    }
+
+    function setNetCashFlow(address _reserve, address _user)public {
+        AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
+        user.netCashFlow = int256(user.earningsCashFlow) - int256(user.spendingCashFlow);
     }
 
     //still needs testing
-    function getNetCashFlow()public view returns(int512) onlyLocalOwner{
+    function getNetCashFlow(address _reserve, address _user)public view returns(int256){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         return user.netCashFlow;
     }
 
-    //get the values for the User
-    (totalLiquidityETH, totalCollateralETH, totalBorrowsETH, availableBorrowsETH, currentLiquidationThreshold, ltv,
-        healthFactor) = lendingPool.getUserAccountData(userAddress);
     /*
     //get User Reserve Data
     (uint256 currentATokenBalance, uint256 currentUnderlyingBalance, uint256 currentBorrowBalance, uint256 principalBorrowBalance,
@@ -173,14 +170,12 @@ contract RateAdvisorPlatform is Ownable{
     // have an investments in it. This should be based off the stable APR and variable APR
     // as well as the offered Monthly payment, prinicpal balance, and expected loan duration
     // Basically find the method that gives them the most profit for their profile type.
-    function setBestRateStrategy(address _reserve, address _user){
+    /*function setBestRateStrategy(address _reserve, address _user) public{
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         //get User Reserve Data
         (uint256 currentATokenBalance, uint256 currentUnderlyingBalance, uint256 currentBorrowBalance, uint256 principalBorrowBalance,
         uint256 borrowRateMode, uint256 borrowRate, uint256 liquidityRate, uint256 originationFee, uint256 variableBorrowIndex, uint256 lastUpdateTimestamp,
-        bool usageAsCollateralEnabled) = lendingPool.getUserReserveData(reserve, userAddress);
-        //
-        rateSwitcher.rateSwapIndividual(_reserve, _user);
-    }
+        bool usageAsCollateralEnabled) = lendingPool.getUserReserveData(_reserve, _user);
+    }*/
 
 }
