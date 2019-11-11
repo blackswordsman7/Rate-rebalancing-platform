@@ -24,20 +24,6 @@ const myAddress = '0xa3e1c2602f628112E591A10094bbD59BDC3cb512';
 web3.eth.accounts.create();
 
 contract("RateSwitcher", async()=>{
-    it("should return the interest Rate", async ()=>{
-        let instance = await RateSwitcher.deployed();
-        let accounts = await web3.eth.getAccounts();
-        let reserveAdd = '0xff795577d9ac8bd7d90ee22b6c1703490b6512fd';
-        var {mode,rate} = await instance.typeOfInterestRate(reserveAdd, myAddress);
-        if(mode==0){
-            var realRate = await lendingPoolProvCore.getUserCurrentFixedBorrowRate(reserveAdd, myAddress);
-            assert.equal(rate, realRate);
-        }
-        else{
-            var realRate = await lendingPoolProvCore.getUserCurrentVariableBorrowRate(reserveAdd, myAddress);
-            assert.equal(rate, realRate);
-        }
-    })
     it("should swap the interest Rates for all Reserves", async ()=>{
         let meta = await RateSwitcher.deployed();
         let accounts = await web3.eth.getAccounts();

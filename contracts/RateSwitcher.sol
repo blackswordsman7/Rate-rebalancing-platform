@@ -12,7 +12,7 @@ import "../AaveProtocol/aave-protocol/contracts/libraries/CoreLibrary.sol";
 import "../AaveProtocol/aave-protocol/contracts/configuration/AddressStorage.sol";
 import "../AaveProtocol/aave-protocol/contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
-import "github.com/provable-things/ethereum-api/provableAPI_0.5.sol";
+import "./provableAPI.sol";
 
 
 // RateSwitcher contract will automate the interest rate mode depending on market
@@ -73,21 +73,6 @@ contract RateSwitcher is UsingProvable, Ownable{
          }
     }
 
-    function updateInterestRates() payable{
-        if (provable_getPrice("URL") > this.balance) {
-           emit LogNewProvableQuery("Provable query was NOT sent, please add some ETH to cover for the query fee");
-       }
-       else{
-           emit LogNewProvableQuery("Provable query was sent, standing by for the answer..");
-           //gets the list of reserves
-           address[] memory reservesListLocal = lendingPool.getReserves();
-           for(uint i = 0; i < reservesListLocal.length; i++){
-               provable_query("URL", "json(https://github.com/aave/aave-protocol/blob/master/abi/LendingPool.json).getReserveData");
-               rateSwapIndividual(reservesListLocal[i]);
-           }
-       }
-    }
-/*
     function rateSwapAll() external payable{
         //gets the list of reserves
         address[] memory reservesListLocal = lendingPool.getReserves();
@@ -115,5 +100,16 @@ contract RateSwitcher is UsingProvable, Ownable{
             }
         }
     } //end of rateSwap function
-*/
+
+    function updateInterestRates() payable{
+        if (provable_getPrice("URL") > this.balance) {
+           emit LogNewProvableQuery("Provable query was NOT sent, please add some ETH to cover for the query fee");
+       }
+       else{
+           emit LogNewProvableQuery("Provable query was sent, standing by for the answer..");
+           //get results 30 seconds from now
+           provable_query(30, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHXBT).result.XETHXXBT.c.0");
+           rateSwapAll();
+       }
+    }
 }
