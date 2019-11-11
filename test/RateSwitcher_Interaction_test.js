@@ -25,11 +25,6 @@ web3.eth.accounts.create();
 
 contract("RateSwitcher", async()=>{
     it("should swap the interest Rates for all Reserves", async ()=>{
-        let meta = await RateSwitcher.deployed();
-        let accounts = await web3.eth.getAccounts();
-        let results = await meta.rateSwapAll(myAddress, {from: myAddress});
-        //let reserveAdd = '0xff795577d9ac8bd7d90ee22b6c1703490b6512fd';
-        //let (mode,rate) = await instance.typeOfInterestRate(reserveAdd, accounts[0]);
-        results.log[0];
+        
     })
 })
