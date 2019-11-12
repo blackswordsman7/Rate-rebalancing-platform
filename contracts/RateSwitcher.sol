@@ -89,17 +89,28 @@ contract RateSwitcher is usingProvable, Ownable{
          (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
          uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(_reserve, msg.sender);
 
+         uint256 variableRateDue = (currentVariableBorrowRate.rayDiv(12)).rayMul(_principalBorrowBalance);
+         uint256 stableRateDue = (userCurrentFixedBorrowRate.rayDiv(12)).rayMul(_principalBorrowBalance);
+
          //Conditional to verify that they have are active on this reserve
          if(_principalBorrowBalance > 0){
              //Fixed rate to Variable Rate swap
              if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
-                 lendingPool.swapBorrowRateMode(_reserve);
-                 emit SwapLog(msg.sender, _reserve, currentVariableBorrowRate);
+                 uint256 savedAmount = stableRateDue.sub(variableRateDue);
+                 uint256 minimumAmount = _principalBorrowBalance.div(10);
+                 if(savedAmount > minimumAmount){
+                     lendingPool.swapBorrowRateMode(_reserve);
+                     emit SwapLog(msg.sender, _reserve, currentVariableBorrowRate);
+                 }
              }
              //Variable Rate to Fixed Rate swap
              if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
-                 lendingPool.swapBorrowRateMode(_reserve);
-                 emit SwapLog(msg.sender, _reserve, userCurrentFixedBorrowRate);
+                 uint256 savedAmount = variableRateDue.sub(stableRateDue);
+                 uint256 minimumAmount = _principalBorrowBalance.div(10);
+                 if(savedAmount > minimumAmount){
+                     lendingPool.swapBorrowRateMode(_reserve);
+                     emit SwapLog(msg.sender, _reserve, userCurrentFixedBorrowRate);
+                 }
              }
          }
     }
@@ -124,15 +135,18 @@ contract RateSwitcher is usingProvable, Ownable{
                 //Fixed rate to Variable Rate swap
                 if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
                     uint256 savedAmount = stableRateDue.sub(variableRateDue);
-                    if(savedAmount > (_principalBorrowBalance.rayMul(0.05))){
+                    uint256 minimumAmount = _principalBorrowBalance.div(10);
+                    if(savedAmount > minimumAmount){
                         lendingPool.swapBorrowRateMode(reservesListLocal[i]);
                         emit SwapLog(_userAddress, reservesListLocal[i], currentVariableBorrowRate);
                     }
                 }
+
                 //Variable Rate to Fixed Rate swap
                 if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
                     uint256 savedAmount = variableRateDue.sub(stableRateDue);
-                    if(savedAmount > (_principalBorrowBalance.rayMul(0.05))){
+                    uint256 minimumAmount = _principalBorrowBalance.div(10);
+                    if(savedAmount > minimumAmount){
                         lendingPool.swapBorrowRateMode(reservesListLocal[i]);
                         emit SwapLog(_userAddress, reservesListLocal[i], userCurrentFixedBorrowRate);
                     }
