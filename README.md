@@ -1,12 +1,12 @@
 <h1 align="center">
-  <img src="logo/defi2-02.png" width = "250" height = "250"/>
+  <img src="defi2-02.png" width = "250" height = "250"/>
 <br>
 </h1>
 
 
-# Rate-rebalancing-platform
 > "On Ethereum, contracts are the only people."
 
+## Rate Rebalancing Platform
 
 ## Table of contents
 * [Business Model](#business-model)
