@@ -139,15 +139,15 @@ contract RateAdvisorPlatform is Ownable{
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
         return user.netCashFlow;
     }
-
-    /*
-    //get User Reserve Data
-    (uint256 currentATokenBalance, uint256 currentUnderlyingBalance, uint256 currentBorrowBalance, uint256 principalBorrowBalance,
-    uint256 borrowRateMode, uint256 borrowRate, uint256 liquidityRate, uint256 originationFee, uint256 variableBorrowIndex, uint256 lastUpdateTimestamp,
-    bool usageAsCollateralEnabled) = lendingPool.getUserReserveData(reserve, userAddress);
-
+/*
     function payBackStrategy(address _reserve, address _user) return (){
         AdvisorUserReserveData storage user = advisorUserReserveData[_user][_reserve];
+        //get User Reserve Data
+        (uint256 currentATokenBalance, uint256 currentUnderlyingBalance, uint256 currentBorrowBalance, uint256 principalBorrowBalance,
+        uint256 borrowRateMode, uint256 borrowRate, uint256 liquidityRate, uint256 originationFee, uint256 variableBorrowIndex, uint256 lastUpdateTimestamp,
+        bool usageAsCollateralEnabled) = lendingPool.getUserReserveData(_reserve, _user);
+
+        (uint256 _totalLiquidityETH, uint256 _totalCollateralETH, uint256 _totalBorrowsETH, uint256 _availableBorrowsETH, uint256 _currentLiquidationThreshold, uint256 _ltv, uint256 _healthFactor) = lendingPool.getUserAccountData(_user);
         //if the health factor is low, the netCashFlow is negative, and you have some money then you have to make payments
         if((healthFactor>=1) && (healthFactor<1.25)){
             if()
@@ -164,7 +164,7 @@ contract RateAdvisorPlatform is Ownable{
         }
 
         //if
-    }*/
+    }
 
     // should find the best rate strategy for all Reserves, even if the user doesnt
     // have an investments in it. This should be based off the stable APR and variable APR

@@ -19,6 +19,10 @@
  */
 
 const HDWalletProvider = require('truffle-hdwallet-provider');
+
+const Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.WebsocketProvider("wss://kovan.infura.io/ws/v3/344452915ed54c76a762b0eee4b66060"));
+//var web3 = new Web3("https://kovan.infura.io/v3/344452915ed54c76a762b0eee4b66060");
  // const infuraKey = "fj4jll3k.....";
 
 const fs = require('fs');
@@ -61,11 +65,14 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     kovan: {
-        provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/344452915ed54c76a762b0eee4b66060`),
+        provider: () => new HDWalletProvider(mnemonic, web3),
         network_id: 42,       // Ropsten's id
+        //networkCheckTimeout: 10000000,
+        from: '0xa3e1c2602f628112E591A10094bbD59BDC3cb512',
+        websockets: true,
       // gas: 5500000,        // Ropsten has a lower block limit than mainnet
       // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-      // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      // timeoutBlocks: 1000,  // # of blocks before a deployment times out  (minimum/default: 50)
       // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
 

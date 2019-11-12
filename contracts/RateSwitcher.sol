@@ -1,3 +1,4 @@
+
 pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
@@ -19,7 +20,7 @@ import "./provableAPI.sol";
 // variables. Which are determined by the base interests rates, untilization,
 // and rate scaling ratios.
 //()
-contract RateSwitcher is UsingProvable, Ownable{
+contract RateSwitcher is usingProvable, Ownable{
 
     //@dev Events
     event SwapLog(address indexed _user, address indexed _reserve, uint256 _rate);
@@ -29,6 +30,10 @@ contract RateSwitcher is UsingProvable, Ownable{
 
     //user address
     address userAddress;
+
+    string datasource = "URL";
+    uint256 public queryPrice;
+    string public ethPriceInUSD;
 
     // Contract initialization
     LendingPoolAddressesProvider public lpAddressesProvider;
@@ -41,18 +46,41 @@ contract RateSwitcher is UsingProvable, Ownable{
          lpAddressesProvider = LendingPoolAddressesProvider(0x9C6C63aA0cD4557d7aE6D9306C06C093A2e35408);
          lendingPool = LendingPool(lpAddressesProvider.getLendingPool());
          lendingPoolCore = LendingPoolCore(lpAddressesProvider.getLendingPoolCore());
-         emit LogConstructorInitiated("Constructor was initiated. Call 'rateSwap()' to send the Provable Query.");
+
+         provable_setCustomGasPrice(21 * 10 ** 9);
+         queryPrice = provable_getPrice(datasource);
+         emit LogConstructorInitiated("Constructor was initiated. Call 'getEthPriceInUSDViaProvable()' to send the Provable Query.");
     }
 
+    function testLendingPoolAbstraction(address _reserve) public view returns (uint256){
+        uint256 currentFixedBorrowRate = lendingPoolCore.getReserveCurrentFixedBorrowRate(_reserve);
+        return currentFixedBorrowRate;
+    }
+
+    function testLendingPoolCoreAbstraction(address _reserve) public view returns (uint256){
+        uint256 currentVariableBorrowRate = lendingPoolCore.getReserveCurrentVariableBorrowRate(_reserve);
+        return currentVariableBorrowRate;
+    }
+
+    function testGetUserReserveData(address _reserve, address _user) public view returns (uint256, uint256){
+        (, , , ,
+        uint256 borrowRateMode, uint256 borrowRate, , , , ,) = lendingPool.getUserReserveData(_reserve, _user);
+
+        return (borrowRateMode, borrowRate);
+    }
+
+    mapping (bytes32 => bool) public pendingQueries;
+
     //provable callback function
-    function __callback(bytes32 myid, string result) {
-       if (msg.sender != provable_cbAddress()) revert();
-       //
-       emit LogPriceUpdated(result);
-       updateInterestRate();
+    function __callback(bytes32 _myid, string memory _result,  bytes memory _proof) public {
+       require(msg.sender == provable_cbAddress());
+       require(pendingQueries[_myid]==true);
+       ethPriceInUSD = _result;
+       emit LogPriceUpdated(ethPriceInUSD);
+       getEthPriceInUSDViaProvable();
    }
 
-    function rateSwapIndividual(address _reserve) internal payable{
+    function rateSwapIndividual(address _reserve) public {
          uint256 currentVariableBorrowRate = lendingPoolCore.getReserveCurrentVariableBorrowRate(_reserve);
          uint256 userCurrentFixedBorrowRate = lendingPoolCore.getUserCurrentFixedBorrowRate(_reserve, msg.sender);
          (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
@@ -73,7 +101,7 @@ contract RateSwitcher is UsingProvable, Ownable{
          }
     }
 
-    function rateSwapAll() external payable{
+    function rateSwapAll(address _userAddress) public {
         //gets the list of reserves
         address[] memory reservesListLocal = lendingPool.getReserves();
         //@dev for loop that iterates through every resvere and updates the users borrowRateMode
@@ -85,31 +113,45 @@ contract RateSwitcher is UsingProvable, Ownable{
             (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
             uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(reservesListLocal[i], _userAddress);
 
+            uint256 variableRateDue = (currentVariableBorrowRate.div(12)).mul(_principalBorrowBalance);
+            uint256 stableRateDue = (userCurrentFixedBorrowRate.div(12)).mul(_principalBorrowBalance);
+
             //Conditional to verify that they have are active on this reserve
             if(_principalBorrowBalance > 0){
                 //Fixed rate to Variable Rate swap
                 if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
-                    lendingPool.swapBorrowRateMode(reservesListLocal[i]);
-                    emit SwapLog(_userAddress, reservesListLocal[i], currentVariableBorrowRate);
+                    uint256 savedAmount = stableRateDue.sub(variableRateDue);
+                    if(saveAmount > (_principalBorrowBalance.mul(0.05))){
+                        lendingPool.swapBorrowRateMode(reservesListLocal[i]);
+                        emit SwapLog(_userAddress, reservesListLocal[i], currentVariableBorrowRate);
+                    }
                 }
                 //Variable Rate to Fixed Rate swap
                 if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
-                    lendingPool.swapBorrowRateMode(reservesListLocal[i]);
-                    emit SwapLog(_userAddress, reservesListLocal[i], userCurrentFixedBorrowRate);
+                    uint256 savedAmount = variableRateDue.sub(stableRateDue);
+                    if(saveAmount > (_principalBorrowBalance.mul(0.05))){
+                        lendingPool.swapBorrowRateMode(reservesListLocal[i]);
+                        emit SwapLog(_userAddress, reservesListLocal[i], userCurrentFixedBorrowRate);
+                    }
                 }
             }
         }
     } //end of rateSwap function
 
-    function updateInterestRates() payable{
-        if (provable_getPrice("URL") > this.balance) {
-           emit LogNewProvableQuery("Provable query was NOT sent, please add some ETH to cover for the query fee");
-       }
-       else{
-           emit LogNewProvableQuery("Provable query was sent, standing by for the answer..");
-           //get results 30 seconds from now
-           provable_query(30, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHXBT).result.XETHXXBT.c.0");
-           rateSwapAll();
-       }
+    function getEthPriceInUSDViaProvable() public payable{
+        require(queryPrice > 0);
+        userAddress = msg.sender;
+        if ((msg.value >= queryPrice)) {
+             msg.sender.transfer(msg.value - queryPrice);
+             //get results 180 seconds from now
+             bytes32 queryId = provable_query(180, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHXBT).result.XETHXXBT.c.0");
+             pendingQueries[queryId] = true;
+             //after the query, call rate swap all to optimize al the reserve interest rates
+             rateSwapAll(userAddress);
+             emit LogNewProvableQuery("Rate Swap hss been initiated and the provable query was sent, standing by for the answer..");
+         }
+         else{
+             emit LogNewProvableQuery("Provable query was NOT sent, please add some ETH to cover for the query/optimization fee");
+         }
     }
 }

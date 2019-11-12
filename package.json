@@ -12,10 +12,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@openzeppelin/test-helpers": "^0.5.3",
     "node": "^12.13.0",
     "node-gyp": "^6.0.1",
     "openzeppelin-solidity": "^2.4.0",
+    "truffle-hdwallet-provider": "^1.0.17",
     "web3": "^1.2.2",
+    "web3-providers-ws": "^1.2.2",
     "ws": "^7.2.0"
   }
 }
