@@ -166,12 +166,24 @@ contract('RateSwitcher', (_user, accounts) => {
             let lpcValue2 = await lendingPoolCoreProv.methods.getReserveCurrentVariableBorrowRate('0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD').call({from: account[0]});
             assert.equal(lpcValue.toNumber(),lpcValue2.toNumber());
         })
+        /*
         it('should swap the interest rates', async()=>{
             let _daiReserve = '0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD'
-            let {_borrowRateMode, _borrowRate} = lendingPool.getUserReserveData(_daiReserve, account[0].address).call{fomr:account[0]};
+            let {_borrowRateMode, _borrowRate} = await lendingPool.getUserReserveData(_daiReserve, account[0].address).call{from:account[0]};
+            let oldBorrowRateMode = _borrowRateMode;
+            let oldBorrowRate = _borrowRate;
             instance.rateSwapIndividual(_daiReserve, accouont[0].address);
-        })
+            let {_borrowRateMode, _borrowRate} = await lendingPool.getUserReserveData(_daiReserve, account[0].address).call{from:account[0]};
+            let newBorrowRateMode = _borrowRateMode;
+            let newBorrowRate = _borrowRate;
+            if((oldBorrowRateMode == newBorrowRateMode) && (borrowRate == )){
+                if(oldBorrowRate < )
+            }
+            if(oldBorrowRateMode == 1){
 
+            }
+        })
+        */
     })
 
 

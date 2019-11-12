@@ -1,4 +1,4 @@
-/*
+
 const RateAdvisorPlatform = artifacts.require("RateAdvisorPlatform");
 
 ///initialize web3 object
@@ -20,4 +20,3 @@ contract("RateAdvisorPlatform", async()=>{
     //test Expected Loan duration
     //
 });
-*/

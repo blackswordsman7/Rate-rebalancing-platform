@@ -21,6 +21,9 @@ import "./provableAPI.sol";
 // and rate scaling ratios.
 //()
 contract RateSwitcher is usingProvable, Ownable{
+    using SafeMath for uint256;
+    using WadRayMath for uint256;
+    using Address for address payable;
 
     //@dev Events
     event SwapLog(address indexed _user, address indexed _reserve, uint256 _rate);
@@ -113,15 +116,15 @@ contract RateSwitcher is usingProvable, Ownable{
             (,,,uint256 _principalBorrowBalance, uint256 _borrowRateMode,
             uint256 _borrowRate,,,,,) = lendingPool.getUserReserveData(reservesListLocal[i], _userAddress);
 
-            uint256 variableRateDue = (currentVariableBorrowRate.div(12)).mul(_principalBorrowBalance);
-            uint256 stableRateDue = (userCurrentFixedBorrowRate.div(12)).mul(_principalBorrowBalance);
+            uint256 variableRateDue = (currentVariableBorrowRate.rayDiv(12)).rayMul(_principalBorrowBalance);
+            uint256 stableRateDue = (userCurrentFixedBorrowRate.rayDiv(12)).rayMul(_principalBorrowBalance);
 
             //Conditional to verify that they have are active on this reserve
             if(_principalBorrowBalance > 0){
                 //Fixed rate to Variable Rate swap
                 if((_borrowRateMode == 0) && (_borrowRate > currentVariableBorrowRate)) {
                     uint256 savedAmount = stableRateDue.sub(variableRateDue);
-                    if(saveAmount > (_principalBorrowBalance.mul(0.05))){
+                    if(savedAmount > (_principalBorrowBalance.rayMul(0.05))){
                         lendingPool.swapBorrowRateMode(reservesListLocal[i]);
                         emit SwapLog(_userAddress, reservesListLocal[i], currentVariableBorrowRate);
                     }
@@ -129,7 +132,7 @@ contract RateSwitcher is usingProvable, Ownable{
                 //Variable Rate to Fixed Rate swap
                 if((_borrowRateMode == 1) && (_borrowRate > userCurrentFixedBorrowRate)){
                     uint256 savedAmount = variableRateDue.sub(stableRateDue);
-                    if(saveAmount > (_principalBorrowBalance.mul(0.05))){
+                    if(savedAmount > (_principalBorrowBalance.rayMul(0.05))){
                         lendingPool.swapBorrowRateMode(reservesListLocal[i]);
                         emit SwapLog(_userAddress, reservesListLocal[i], userCurrentFixedBorrowRate);
                     }
