@@ -19,6 +19,6 @@
     "truffle-hdwallet-provider": "^1.0.17",
     "web3": "^1.2.2",
     "web3-providers-ws": "^1.2.2",
-    "ws": "^7.2.0"
+    "ws": "^7.4.6"
   }
 }
